@@ -129,14 +129,17 @@ void LMTempFit() {
  	// Chi2 estimation, returns ID (index number) for best fit
  	double min_fit_id = Chi2();
 
- 	cout << Form("Best fit was hY%d", min_fit_id) << endl; 
+
+/*-------------------OUTPUTS-----------------------------------*/
+
+ 	cout << Form("Best fit was hY%d \n", min_fit_id) << endl; 
 
  	cout << "Parameters are: \n" << endl;
 
  	for (int i = 1; i <= 3; i++) 
  	{
  		
- 		cout << hY_a[min_fit_id]->GetParameter(i); << "\n" << endl;	
+ 		cout << Form("Param%d: ", i) << hY_a[min_fit_id]->GetParameter(i); << "\n" << endl;	
  	}
  	
  
@@ -162,7 +165,7 @@ void FitFNC()
 }
 
 
-// Chi2 test: (only for fv2 fit atm)
+// Chi2 test: 
 double Chi2() 
 {
 
