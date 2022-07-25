@@ -78,7 +78,6 @@ void LMTempFit() {
 	
 	for (int i = 1; i <= NH; i++) 
 	{
-		fFit->SetParName(0, "G");
 		fFit->SetParameter(i, Form("V%d,%d", i)); // V2,2 and V3,3
 	}
 
