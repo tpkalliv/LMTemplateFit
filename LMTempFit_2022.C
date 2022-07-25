@@ -143,7 +143,7 @@ int Chi2()
 
 			// Calculates (hY'-fv2)^2 / sigma^2 value for every bin 
 			Double_t chi2_val += TMath::Pow((hY_a[j]->GetBinContent(i) - fv2->Eval(bincent)), 2) / 
-			TMath::Pow(fv2->GetParError(0) + fv2->GetParError(1) + fv2->GetParError(2), 2) + TMath:Pow(hY_a[j]->GetBinError(i));
+			TMath::Pow(fv2->GetParError(0) + fv2->GetParError(1) + fv2->GetParError(2), 2) + TMath:Pow(hY_a[j]->GetBinError(i), 2);
 			// Sigma^2 = (G_err + V2,2_err + V3,3_err)^2 + (hY_a[j]_err)^2
 		}
 
@@ -161,4 +161,4 @@ int Chi2()
 
 NOTES:
 
--''
+-
