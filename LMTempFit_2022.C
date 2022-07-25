@@ -131,6 +131,15 @@ void LMTempFit() {
 
  	cout << Form("Best fit was hY%d", min_fit_id) << endl; 
 
+ 	cout << "Parameters are: \n" << endl;
+
+ 	for (int i = 1; i <= 3; i++) 
+ 	{
+ 		
+ 		cout << hY_a[min_fit_id]->GetParameter(i); << "\n" << endl;	
+ 	}
+ 	
+ 
 
 
 } // PROGRAM ENDS HERE
