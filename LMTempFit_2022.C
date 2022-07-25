@@ -112,7 +112,7 @@ void LMTempFit() {
  	// Cloning hY to create hY'
  	TH1D *hY_a = hY->Clone("hY_a");
 
- 	for (int i = 1; i <= hY->GetBinSize(); i++) 
+ 	for (int i = 1; i <= hY->GetNbinsx(); i++) 
  	{
  		hY_a->SetBinContent(i, hY->GetBinContent(i) - hY_LM->GetBinContent(i)); // Subtracting bin contents and adding them into hY'
  	}
