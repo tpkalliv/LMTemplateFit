@@ -28,10 +28,9 @@ void LMTempFit() {
 	// Harmonics in fit function
 	Int_t NH = 2;
 
-	// Callable functions
+	// Function introductions with set parameters
 	void LoadData_hY(infile_hY);
 	void LoadData_hY_LM(infile_hY_LM);
-	Double_t Chi2();
 
 
 	// Loading input data from hY (high multiplicity yield)
@@ -49,7 +48,7 @@ void LMTempFit() {
 	}
 
 
-	//	Fit function G(fourier)
+	//	Fit function creation -> G(fourier)
  	string cosine = "[0]*(1";
 	for (int i=1; i<=NH; i++) {
 		ostringstream app;
@@ -57,7 +56,7 @@ void LMTempFit() {
 		string append = app.str();
 		cosine = cosine + append;
 	}
-
+	
 	cosine = cosine + ")";
 	cout << cosine << endl;
 	const char* cos = cosine.c_str();
