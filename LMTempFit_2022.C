@@ -78,8 +78,8 @@ void LMTempFit() {
  	}	
 
  	// Initializing for Chi2 test
- 	Double_t chi2_best = 999;
- 	Double_t factorF_best;
+ 	Double_t chi2_best = 0;
+ 	Double_t factorF_best = 0;
 
  	/* 	Multiplying, subtracting, fitting and Chi2 testing
 	/
