@@ -8,22 +8,29 @@
 
 void LMTempFit() {
 
+	// Initializings for F value calc
 	Int_t numbOfFVar = 100;
 	Double_t factorF[numbOfFVar];
 	Double_t stepsize = (1-3)/100;
+
+	// Initializings for Chi2 test
+ 	Double_t chi2_best = 0;
+ 	Double_t factorF_best = 0;
+ 	Double_t G_par = 0;
+ 	Double_t V2_par = 0;
+ 	Double_t V3_par = 0;
 	
 	// Input histos 
 	TH1D *hY; 
 	TH1D *hY_LM;
  	TH1D *hY_a; // hY'
 
-	// Harmonics
+	// Harmonics in fit function
 	Int_t NH = 2;
 
-	// Functions
+	// Callable functions
 	void LoadData_hY(infile_hY);
 	void LoadData_hY_LM(infile_hY_LM);
-	void FitFNC();
 	Double_t Chi2();
 
 
@@ -40,7 +47,6 @@ void LMTempFit() {
 			TFile *fIn_LM = TFile::Open(filename_hY_LM,"read");
 			hY_LM = (TH1D*)fIn_LM->Get("hY_LM");
 	}
-
 
 
 	//	Fit function G(fourier)
@@ -77,47 +83,36 @@ void LMTempFit() {
  		factorF[i] = factorF_samp + stepsize; // F factor variations
  	}	
 
- 	// Initializing for Chi2 test
- 	Double_t chi2_best = 0;
- 	Double_t factorF_best = 0;
-
- 	/* 	Multiplying, subtracting, fitting and Chi2 testing
-	/
-	/	Result: 
-	*/
+ 	// 	Multiplying, subtracting, fitting and Chi2 testing
  	for (int j = 0; j < numbOfFVar; j++) 
  	{
- 		hY_LM->Scale(factorF[j]); 							// F * hY_LM
- 		hY_a = hY->Add(hY_LM, -1); 							// hY' 
- 		hY_a->Fit("fFit")									// Fitting j'th fit to hY'
- 		Double_t min_val = Chi2(hY_a);						// Estimating fit 
+ 		hY_LM->Scale(factorF[j]); 		// F * hY_LM
+ 		hY_a = hY->Add(hY_LM, -1); 		// hY' 
+ 		hY_a->Fit("fFit");				// Fitting j'th fit to hY'
+ 		Double_t min_val = Chi2(hY_a);	// Calculating Chi2 value 
 
+ 		// Saving best values
  		if (min_val < chi2_best) 
  		{ 
  			chi2_best = min_val; 
- 			factorF_best = factorF[j] 
+ 			factorF_best = factorF[j];
+			G_par = hY_a->GetParameter(0);
+			V2_par = hY_a->GetParameter(1);
+			V3_par = hY_a->GetParameter(2);	
  		}
  	}
 
- 	/*	Output
- 	/	
- 	/	Parameters: G , V2,2 , V3,3 , F 
- 	*/
- 	cout << Form("Best fit was hY_a%d \n", min_fit_id) << endl; 
-
- 	cout << "Parameters are: \n" << endl;
-
- 	for (int i = 1; i <= 3; i++) 
- 	{
- 		cout << Form("Param%d: ", i) << hY_a[min_fit_id]->GetParameter(i); << "\n" << endl;	
- 		cout << "F value: " << factorF[min_fit_id] << endl;
- 	}
- 	
+ 	// Outputs
+ 	cout << "Chi2 value: " << chi2_best << "\n\n" << endl;
+ 	cout << "F value: " << factorF_best << "\n" << endl;
+ 	cout << "G parameter: " << G_par << "\n" << endl;
+ 	cout << "V2,2: " << V2_par << "\n" << endl;
+ 	cout << "V3,3: " << V3_par << endl;
 } 
 
 
 
-/*	Chi2 Calc
+/*	Chi2 Test
 /		
 /	Parameters: hY' -> "For fitting"
 /	Returns: Double_t -> "Chi2 statistic value"  
@@ -126,16 +121,17 @@ Double_t Chi2(TH1D *hY_a)
 {
 	Double_t chi2_val = 0.0;
 
-	// Goes through every bin in the current hY'
+	// Loops over every bin in hY'
 	for (int i = 0; i < hY_a->GetNbinsX(); i++) 
 	{
 		// Calculates x-value for current bin to get fit function value at x
 		Double_t bincent = hY_a->GetXaxis()->GetBinCenter(i);
 
-		// Calculates (hY'-fv2)^2 / Sigma^2 value per bin and adds them up for chi2_val
-		// Sigma^2 = (G_err + V2,2_err + V3,3_err)^2 + (hY_a_err)^2
+		// Calculates/Integrates: Sum((hY'-fv2)^2 / Sum((Sigma_i)^2)) = Chi-Square Statistical value
+		// Sum(Sigma_i^2) = (G_err)^2 + (V2,2_err)^2 + (V3,3_err)^2 + (hY_a_err)^2
 		Double_t chi2_val = chi2_val + (TMath::Pow((hY_a->GetBinContent(i) - fFit->Eval(bincent)), 2) / 
-		TMath::Power(fFit->GetParError(0) + fFit->GetParError(1) + fFit->GetParError(2), 2) + TMath:Power(hY_a->GetBinError(i), 2));
+		TMath::Power(fFit->GetParError(0), 2) + TMath::Power(fFit->GetParError(1), 2) + TMath::Power(fFit->GetParError(2), 2) + 
+		TMath:Power(hY_a->GetBinError(i), 2));
 	}
 			
 	return chi2_val;
