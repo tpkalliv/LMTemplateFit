@@ -48,7 +48,7 @@ void LMTempFit() {
 	}
 
 
-	//	Fit function creation -> G(fourier)
+	//	Fit function creation -> G(fourier) or the Y_ridge
  	string cosine = "[0]*(1";
 	for (int i=1; i<=NH; i++) {
 		ostringstream app;
@@ -56,7 +56,7 @@ void LMTempFit() {
 		string append = app.str();
 		cosine = cosine + append;
 	}
-	
+
 	cosine = cosine + ")";
 	cout << cosine << endl;
 	const char* cos = cosine.c_str();
@@ -85,10 +85,10 @@ void LMTempFit() {
  	// 	Multiplying, subtracting, fitting and Chi2 testing
  	for (int j = 0; j < numbOfFVar; j++) 
  	{
- 		hY_LM->Scale(factorF[j]); 		// F * hY_LM
- 		hY_a = hY->Add(hY_LM, -1); 		// hY' 
- 		hY_a->Fit("fFit");				// Fitting j'th fit to hY'
- 		Double_t min_val = Chi2(hY_a);	// Calculating Chi2 value 
+ 		hY_LM->Scale(factorF[j]); 				// F * hY_LM
+ 		hY_a = hY->Add(hY_LM, -1); 				// hY' 
+ 		hY_a->Fit("fFit");						// Fitting j'th fit to hY'
+ 		Double_t min_val = Chi2(hY_a, fFit);	// Calculating Chi2 value 
 
  		// Saving best values
  		if (min_val < chi2_best) 
@@ -102,7 +102,8 @@ void LMTempFit() {
  	}
 
  	// Outputs
- 	cout << "Chi2 value: " << chi2_best << "\n\n" << endl;
+ 	cout << "Lowest Chi2 value: " << chi2_best << "\n\n" << endl;
+ 	cout << "PARAMETERS \n" << endl; 
  	cout << "F value: " << factorF_best << "\n" << endl;
  	cout << "G parameter: " << G_par << "\n" << endl;
  	cout << "V2,2: " << V2_par << "\n" << endl;
@@ -113,34 +114,47 @@ void LMTempFit() {
 
 /*	Chi2 Test
 /		
-/	Parameters: hY' -> "For fitting"
+/	Parameters: hY' , fFit -> "Yield and fit function" 
 /	Returns: Double_t -> "Chi2 statistic value"  
 */
-Double_t Chi2(TH1D *hY_a) 
+Double_t Chi2(TH1D *hY_a, TF1 *fFit) 
 {
-	Double_t chi2_val = 0.0;
+	Double_t chi2 = 0.0;
 
-	// Loops over every bin in hY'
-	for (int i = 0; i < hY_a->GetNbinsX(); i++) 
+	for (int i = 0; i < h->GetNbinsX(); i++) 
 	{
-		// Calculates x-value for current bin to get fit function value at x
 		Double_t bincent = hY_a->GetXaxis()->GetBinCenter(i);
+		Double_t obs = hY_a->GetBinContent(i);
+		Double_t exp = fFit->Eval(bincent);
+		Double_t err = TMath::Power(hY_a->GetBinError(i), 2) + TMath::Power(fFit->GetParError(0), 2);
 
-		// Calculates/Integrates: Sum((hY'-fv2)^2 / Sum((Sigma_i)^2)) = Chi-Square Statistical value
-		// Sum(Sigma_i^2) = (G_err)^2 + (V2,2_err)^2 + (V3,3_err)^2 + (hY_a_err)^2
-		Double_t chi2_val = chi2_val + (TMath::Pow((hY_a->GetBinContent(i) - fFit->Eval(bincent)), 2) / 
-		TMath::Power(fFit->GetParError(0), 2) + TMath::Power(fFit->GetParError(1), 2) + TMath::Power(fFit->GetParError(2), 2) + 
-		TMath:Power(hY_a->GetBinError(i), 2));
+		if (err != 0) // Exclude sigma^2 = 0
+		{
+			chi2 = chi2 + (TMath::Power(obs - exp, 2) / err);
+		}
 	}
-			
-	return chi2_val;
+
+	return chi2;
 }
 
 
 /* 
+
 
 NOTES:
 
 - Chi2 statistical value should be checked
 
 
+STEPS IN THE ALGORITHM:
+
+1. Loads two input histos
+2. Creates G(fourier) fit function
+3. Gives fit some initial values
+4. Multiplies hY_LM histo with F_i value
+5. Substracts hY_LM from hY histo to create hY' histo
+6. Fits G(fourier) to hY'
+7. Calculates Chi2 value
+8. Compares Chi2 value to the previous best Chi2 value
+9. Prints fit parameters on screen
+ 
