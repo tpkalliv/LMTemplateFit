@@ -82,6 +82,8 @@ void LMTempFit() {
  		factorF[i] = factorF_samp + stepsize; // F factor variations
  	}	
 
+ 	Double_t chi2_best = -999;
+
  	// 	Multiplying, subtracting, fitting and Chi2 testing
  	for (int j = 0; j < numbOfFVar; j++) 
  	{
