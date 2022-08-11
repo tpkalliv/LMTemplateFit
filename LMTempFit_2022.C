@@ -4,13 +4,17 @@
 #include "TH1.h"
 #include "TFile.h"
 #include "TString.h"
-#include "TCanvas.h"
 #include "TLegend.h"
 
+
+/*
+	Program loads two data sets and finds the best fit for them using Chi2.
+	Outputs Chi2 statistical value and also parameters from the best fit.
+*/
 void LMTempFit_2022() {
 
 	// Options
-	bool showChi = false; // True: Shows chi2 for every histogram
+	bool showChi = false; // When "true" shows chi2 for every histogram
 
 	// Initializings 
 	Int_t numbOfFVar = 100; // Number of F values
@@ -32,14 +36,15 @@ void LMTempFit_2022() {
  	
 	// Loads MB and HM (CMS) data
 	TH1D* hY;
-	fIn->GetObject("CMSeta_projection_1_0", hY); // HM data - appropriate values: 1_0, 1_1, 1_3
+	fIn->GetObject("CMSeta_projection_1_1", hY); // HM data - appropriate values: 1_0, 1_1, 1_3
 	if (!hY) { std::cout << "Histogram NOT found!" << std::endl; }	
 	
 
 	TH1D* hY_MB;
-	fIn->GetObject("CMSeta_projection_0_0", hY_MB); // // MB data - appropriate values: 1_0, 1_1, 1_3
+	fIn->GetObject("CMSeta_projection_0_1", hY_MB); // // MB data - appropriate values: 1_0, 1_1, 1_3
 	if (!hY_MB) { std::cout << "Histogram NOT found!" << std::endl; }
-	
+
+
  	// Initializing Chi2 function
  	Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool showChi);
 
@@ -56,6 +61,7 @@ void LMTempFit_2022() {
 	cout << "G(Fourier) is " << cosine << endl;
 	const char* cos = cosine.c_str();
 
+
 	TF1* fFit = new TF1("fFit", cos, -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
 
 	fFit->SetParName(0, "G_param");
@@ -63,15 +69,14 @@ void LMTempFit_2022() {
 	for (int i = 1; i <= NH; i++) 
 	{
 		fFit->SetParName(i, Form("V%d,%d", i+1, i+1)); // Param 1: V2,2 and Param 2: V3,3
-		fFit->SetParLimits(i, -1, 1);
+		//fFit->SetParLimits(i, -1, 1);
 	}
-
 
 	// Initial values for parameters for fitting
 	fFit->SetParameter(0, 1);
 	fFit->SetParameter(1, 0.1); // V2,2
-	fFit->SetParameter(2, 0.1); // V3,3
-	
+	fFit->SetParameter(2, 0.1); // V3,3	
+
 
 	// Creating factor F values
  	for (int i = 0; i <= numbOfFVar; i++) 
@@ -96,7 +101,7 @@ void LMTempFit_2022() {
 
  		if (j == 0) chi2_best = min_val;
 
- 		// Saving best values
+ 		// Saving
  		if (min_val < chi2_best) 
  		{
  			chi2_best = min_val;
@@ -105,14 +110,10 @@ void LMTempFit_2022() {
 			G_par = fFit->GetParameter("G_param");
 			V2_par = TMath::Sqrt(fFit->GetParameter("V2,2")); // Squaring Vn,n to get Vn
 			V3_par = TMath::Sqrt(fFit->GetParameter("V3,3"));
+			hY_a[j]->Write(); // Saves fitted histogram
  		}	
  	}
 
-
-	hY_MB_F[indexVal]->SetName(Form("Peripheral_yield * F_factor"));
- 	hY_a[indexVal]->SetName(Form("Template yield - Peripheral_yield * F_factor"));
- 	hY_MB_F[indexVal]->Write();
- 	hY_a[indexVal]->Write();
 
  	// Outputs
  	cout << "\n\n" << "Lowest Chi2: " << chi2_best << "\n" << endl;
@@ -127,10 +128,12 @@ void LMTempFit_2022() {
 } 
 
 
-/*	Chi2 Test
-/		
-/	Parameters: hY' , fFit -> "Yield and fit function" 
-/	Returns: Double_t -> "Chi2 statistic value"  
+/*	
+	Chi2 Test
+
+	Parameters: hY' , fFit -> "Yield and fit function" 
+	Returns: Double_t -> "Chi2 statistic value"  
+
 */
 Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool chiOp) 
 {
@@ -166,22 +169,17 @@ Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool chiOp)
 
 /* 
 
-NOTES:
-
-- Chi2 statistical value should be checked
-
-
 STEPS IN THE ALGORITHM:
 
-1. Loads two input histos
-2. Creates G(fourier) fit function
-3. Gives fit some initial values
-4. Multiplies hY_MB histo with F_i value
-5. Substracts hY_MB from hY histo to create hY' histo
-6. Fits G(fourier) to hY'
-7. Calculates Chi2 value
-8. Compares Chi2 value to the previous best Chi2 value
-9. Saves histos and fits to .root file
-10. Prints fit parameters on screen
+1. 	Loads two input histos
+2. 	Creates G(fourier) fit function
+3. 	Gives fit some initial values
+4. 	Multiplies hY_MB histo with F_i value
+5. 	Substracts hY_MB from hY histo to create hY' histo
+6. 	Fits G(fourier) to hY'
+7. 	Calculates Chi2 value
+8. 	Compares Chi2 value to the previous best Chi2 value
+9. 	Saves histos and fits to .root file
+10.	Outputs best chi2 value and associated parameters on screen
 
 */
