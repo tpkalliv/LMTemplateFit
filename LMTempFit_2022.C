@@ -30,7 +30,6 @@ void LMTempFit_2022() {
  	TH1D*  hY_a[numbOfFVar]; // Array of hY' histograms for different hY - F*hY_LM values;
  	TH1D* hY_MB_F[numbOfFVar];
 
-
  	// Opens data 
 	TFile* fIn = new TFile ("Corr_1_3_GeV.root", "read");
  	
@@ -44,6 +43,31 @@ void LMTempFit_2022() {
 	fIn->GetObject("CMSeta_projection_0_1", hY_MB); // // MB data - appropriate values: 1_0, 1_1, 1_3
 	if (!hY_MB) { std::cout << "Histogram NOT found!" << std::endl; }
 
+	/*
+	// Zeroing near-side for MB
+	Double_t valz = 999;
+	Double_t minvalz = 999;
+
+	for (int k = 1; k <= hY_MB->GetNbinsX(); k++) {
+		valz = hY_MB->GetBinContent(k);
+		cout << "Old CMS MB bin value: " << valz << endl;
+		if ( valz < minvalz ) { 
+			minvalz = valz; 
+		} 
+		else { continue; }
+	}
+	cout << "MB CMS histo minimum was: " << minvalz << endl;	
+
+	Double_t binvalz = 0;
+	for (int k = 1; k < hY_MB->GetNbinsX(); k++) {
+		if (k < 15) {
+			binvalz = hY_MB->GetBinContent(k);
+			binvalz = minvalz;
+			hY_MB->SetBinContent( k, binvalz);
+			cout << "New CMS MB bin value: " << binvalz << endl;
+		} else {continue;}
+	}
+	*/
 
  	// Initializing Chi2 function
  	Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool showChi);
@@ -58,24 +82,25 @@ void LMTempFit_2022() {
 		cosine = cosine + append;
 	}
 	cosine = cosine + ")";
-	cout << "G(Fourier) is " << cosine << endl;
+	cout << "G(...) is " << cosine << endl;
 	const char* cos = cosine.c_str();
 
 
 	TF1* fFit = new TF1("fFit", cos, -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
 
 	fFit->SetParName(0, "G_param");
+	fFit->SetParLimits(0, -100, 100);
 
 	for (int i = 1; i <= NH; i++) 
 	{
 		fFit->SetParName(i, Form("V%d,%d", i+1, i+1)); // Param 1: V2,2 and Param 2: V3,3
-		//fFit->SetParLimits(i, -1, 1);
+		fFit->SetParLimits(i, -1, 1);
 	}
 
 	// Initial values for parameters for fitting
 	fFit->SetParameter(0, 1);
-	fFit->SetParameter(1, 0.1); // V2,2
-	fFit->SetParameter(2, 0.1); // V3,3	
+	fFit->SetParameter(1, 0.01); // V2,2
+	fFit->SetParameter(2, 0.01); // V3,3	
 
 
 	// Creating factor F values
@@ -92,8 +117,8 @@ void LMTempFit_2022() {
  	{
  		hY_a[j] = (TH1D*) hY->Clone();
  		hY_MB_F[j] = (TH1D*) hY_MB->Clone();
- 		hY_MB_F[j]->Scale(factorF[j]);
- 		hY_a[j]->Add(hY_MB_F[j], -1);
+ 		hY_MB_F[j]->Scale(factorF[j]); // F*Y_MB where F value changes per loop
+ 		hY_a[j]->Add(hY_MB_F[j], -1); // hY - F*Y_MB
  		hY_a[j]->Fit("fFit", "", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);					
 
  		//Double_t min_val = fFit->GetChisquare();
@@ -105,15 +130,16 @@ void LMTempFit_2022() {
  		if (min_val < chi2_best) 
  		{
  			chi2_best = min_val;
- 			indexVal = j;
+ 			indexVal = j; // Index for the histo (hY - F*Y_MB) closest to theory G(Fourier)
  			factorF_best = factorF[j];
 			G_par = fFit->GetParameter("G_param");
 			V2_par = TMath::Sqrt(fFit->GetParameter("V2,2")); // Squaring Vn,n to get Vn
 			V3_par = TMath::Sqrt(fFit->GetParameter("V3,3"));
 			hY_a[j]->Write(); // Saves fitted histogram
+			hY_MB_F[j]->Write();
+			fFit->Write("fit");
  		}	
  	}
-
 
  	// Outputs
  	cout << "\n\n" << "Lowest Chi2: " << chi2_best << "\n" << endl;
@@ -122,6 +148,7 @@ void LMTempFit_2022() {
  	cout << "G parameter: " << G_par << "\n" << endl;
  	cout << "V2,2: " << V2_par << "\n" << endl;
  	cout << "V3,3: " << V3_par << "\n\n" << endl;
+	cout << "Index: " << indexVal << "\n\n" << endl;
 
  	fIn->Close();
  	fOut->Close();
