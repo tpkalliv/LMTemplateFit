@@ -23,51 +23,29 @@ void LMTempFit_2022() {
  	Double_t chi2_best;
  	Double_t factorF_best;
  	Double_t G_par;
+ 	Double_t V1_par;
  	Double_t V2_par;
  	Double_t V3_par;
+ 	Double_t V4_par;
+ 	Double_t V5_par;
  	Int_t indexVal;
-	Int_t NH = 2; // Uses only V2 and V3
- 	TH1D*  hY_a[numbOfFVar]; // Array of hY' histograms for different hY - F*hY_LM values;
- 	TH1D* hY_MB_F[numbOfFVar];
+	Int_t NH = 5;
+ 	TH1D*  hY_a[numbOfFVar];
+	TF1 *fitvn[NH];
+	Double_t vn[NH];
+	Double_t vnError[NH];
 
  	// Opens data 
 	TFile* fIn = new TFile ("Corr_1_3_GeV.root", "read");
  	
 	// Loads MB and HM (CMS) data
 	TH1D* hY;
-	fIn->GetObject("CMSeta_projection_1_1", hY); // HM data - appropriate values: 1_0, 1_1, 1_3
-	if (!hY) { std::cout << "Histogram NOT found!" << std::endl; }	
-	
+	fIn->GetObject("CMSeta_projection_1_0", hY); // HM data - appropriate values: 1_0, 1_1, 1_3
+	if (!hY) { std::cout << "Histogram NOT found!" << std::endl; }		
 
 	TH1D* hY_MB;
-	fIn->GetObject("CMSeta_projection_0_1", hY_MB); // // MB data - appropriate values: 1_0, 1_1, 1_3
+	fIn->GetObject("CMSeta_projection_0_0", hY_MB); // // MB data - appropriate values: 1_0, 1_1, 1_3
 	if (!hY_MB) { std::cout << "Histogram NOT found!" << std::endl; }
-
-	/*
-	// Zeroing near-side for MB
-	Double_t valz = 999;
-	Double_t minvalz = 999;
-
-	for (int k = 1; k <= hY_MB->GetNbinsX(); k++) {
-		valz = hY_MB->GetBinContent(k);
-		cout << "Old CMS MB bin value: " << valz << endl;
-		if ( valz < minvalz ) { 
-			minvalz = valz; 
-		} 
-		else { continue; }
-	}
-	cout << "MB CMS histo minimum was: " << minvalz << endl;	
-
-	Double_t binvalz = 0;
-	for (int k = 1; k < hY_MB->GetNbinsX(); k++) {
-		if (k < 15) {
-			binvalz = hY_MB->GetBinContent(k);
-			binvalz = minvalz;
-			hY_MB->SetBinContent( k, binvalz);
-			cout << "New CMS MB bin value: " << binvalz << endl;
-		} else {continue;}
-	}
-	*/
 
  	// Initializing Chi2 function
  	Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool showChi);
@@ -77,30 +55,36 @@ void LMTempFit_2022() {
  	string cosine = "[0]*(1";
 	for (int i=1; i<=NH; i++) {
 		ostringstream app;
-		app << "+2*[" << i << "]*TMath::Cos(" << i+1 << "*x)"; // G*{1+2*Vn,n*Cos(n*(trigger-associate))}
+		app << "+2*[" << i << "]*TMath::Cos(" << i << "*x)"; 
 		string append = app.str();
 		cosine = cosine + append;
 	}
 	cosine = cosine + ")";
-	cout << "G(...) is " << cosine << endl;
+	cout << cosine << endl;
 	const char* cos = cosine.c_str();
 
 
 	TF1* fFit = new TF1("fFit", cos, -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
 
 	fFit->SetParName(0, "G_param");
-	fFit->SetParLimits(0, -100, 100);
+	fFit->SetParLimits(0, -10, 10);
 
 	for (int i = 1; i <= NH; i++) 
 	{
-		fFit->SetParName(i, Form("V%d,%d", i+1, i+1)); // Param 1: V2,2 and Param 2: V3,3
-		fFit->SetParLimits(i, -1, 1);
+		fFit->SetParName(i, Form("V%d,%d", i, i)); // Param 1: V2,2 and Param 2: V3,3 ...
+		fFit->SetParLimits(i, -1 , 1);
 	}
 
+	
+
 	// Initial values for parameters for fitting
-	fFit->SetParameter(0, 1);
-	fFit->SetParameter(1, 0.01); // V2,2
-	fFit->SetParameter(2, 0.01); // V3,3	
+	fFit->SetParameter(0, 2);
+	fFit->SetParameter(1, 0.1); 
+	fFit->SetParameter(2, 0.06); 
+	fFit->SetParameter(3, 0.03); 
+	fFit->SetParameter(4, 0.03); 
+	fFit->SetParameter(5, 0.03); 
+
 
 
 	// Creating factor F values
@@ -115,11 +99,10 @@ void LMTempFit_2022() {
  	// 	Multiplying, subtracting, fitting and Chi2 testing
  	for (int j = 0; j < numbOfFVar; j++) 
  	{
- 		hY_a[j] = (TH1D*) hY->Clone();
- 		hY_MB_F[j] = (TH1D*) hY_MB->Clone();
- 		hY_MB_F[j]->Scale(factorF[j]); // F*Y_MB where F value changes per loop
- 		hY_a[j]->Add(hY_MB_F[j], -1); // hY - F*Y_MB
- 		hY_a[j]->Fit("fFit", "", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);					
+ 		hY_a[j] = (TH1D*) hY->Clone(); 
+ 		hY_a[j]->Add(hY_MB, -factorF[j]);
+ 		hY_a[j]->Fit("fFit", "", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
+	
 
  		//Double_t min_val = fFit->GetChisquare();
  		Double_t min_val = Chi2(hY_a[j], fFit, showChi);	
@@ -133,21 +116,42 @@ void LMTempFit_2022() {
  			indexVal = j; // Index for the histo (hY - F*Y_MB) closest to theory G(Fourier)
  			factorF_best = factorF[j];
 			G_par = fFit->GetParameter("G_param");
+			V1_par = TMath::Sqrt(fFit->GetParameter("V1,1"));
 			V2_par = TMath::Sqrt(fFit->GetParameter("V2,2")); // Squaring Vn,n to get Vn
 			V3_par = TMath::Sqrt(fFit->GetParameter("V3,3"));
+			V4_par = TMath::Sqrt(fFit->GetParameter("V4,4"));
+			V5_par = TMath::Sqrt(fFit->GetParameter("V5,5"));
 			hY_a[j]->Write(); // Saves fitted histogram
-			hY_MB_F[j]->Write();
-			fFit->Write("fit");
+			fFit->Write();
  		}	
  	}
+
+
+ 	
+ 	// Saving harmonics
+	for (Int_t n=0; n<NH; n++)
+	{
+		TString formula = Form("[0]*(1 + 2*[1]*TMath::Cos(%d*x))",n);									// Creates new fourier
+		fitvn[n]= new TF1(Form("fit_v%d", n),formula, -TMath::Pi()/2.0, 3.0/2.0*TMath::Pi());			// Creates NH fits
+		vn[n] = fFit->GetParameter(n+1);																	// Saves vn's
+		vnError[n] = fFit->GetParError(n+1);																// Saves vn errors
+		fitvn[n]->SetParameter(1,vn[n]);																// Correct harmonic parameters to correct harmonics
+		double zero_param = G_par;
+		fitvn[n]->SetParameter(0, zero_param);
+		fitvn[n]->Write();
+	}
+	
 
  	// Outputs
  	cout << "\n\n" << "Lowest Chi2: " << chi2_best << "\n" << endl;
  	cout << "PARAMETERS \n" << endl; 
  	cout << "F value: " << factorF_best << "\n" << endl;
  	cout << "G parameter: " << G_par << "\n" << endl;
+ 	cout << "V1,1: " << V2_par << "\n" << endl;
  	cout << "V2,2: " << V2_par << "\n" << endl;
  	cout << "V3,3: " << V3_par << "\n\n" << endl;
+ 	cout << "V4,4: " << V4_par << "\n\n" << endl;
+ 	cout << "V5,5: " << V5_par << "\n\n" << endl;
 	cout << "Index: " << indexVal << "\n\n" << endl;
 
  	fIn->Close();
@@ -174,17 +178,20 @@ Double_t Chi2(TH1D *hY_a, TF1 *fFit, bool chiOp)
 
 		// Calculating errors 
 		Double_t fit_G_Err = TMath::Power(fFit->GetParError(0), 2);
-		Double_t fit_V2_err = TMath::Power(fFit->GetParError(1), 2);
-		Double_t fit_V3_err = TMath::Power(fFit->GetParError(2), 2);
+		Double_t fit_V1_err = TMath::Power(fFit->GetParError(1), 2);
+		Double_t fit_V2_err = TMath::Power(fFit->GetParError(2), 2);
+		Double_t fit_V3_err = TMath::Power(fFit->GetParError(3), 2);
+		Double_t fit_V4_err = TMath::Power(fFit->GetParError(4), 2);
+		Double_t fit_V5_err = TMath::Power(fFit->GetParError(5), 2);
 		Double_t hist_err = TMath::Power(hY_a->GetBinError(i), 2);
 
-		Double_t total_err = fit_G_Err + fit_V2_err + fit_V3_err + hist_err;
+		Double_t total_err = fit_G_Err + fit_V1_err + fit_V2_err + fit_V3_err + fit_V4_err + fit_V5_err + hist_err;
 		Double_t val = obs - exp;
 		Double_t chi2_temp = 0.0;
 
 		if (total_err != 0) // Exclude zero denominator
 		{
-			chi2_temp = TMath::Power(val, 2) / (fit_G_Err + fit_V2_err + fit_V3_err + hist_err);
+			chi2_temp = TMath::Power(val, 2) / total_err;
 			chi2 = chi2 + chi2_temp;
 		}
 	}
