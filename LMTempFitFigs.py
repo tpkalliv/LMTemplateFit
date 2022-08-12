@@ -55,8 +55,6 @@ plot.GetPlot().text(0.35,0.98,"Peripheral 2-particle correlation",fontsize=12);
 plot.GetPlot().text(0.1,0.90,"pp $\\sqrt{s}$ = ",fontsize=11);
 plot.GetPlot().text(0.1, 0.92,"$ < p_\\mathrm{T,trig(assoc)} < \\,\\mathrm{GeV}/c$",fontsize=10);
 plot.GetPlot().text(0.5, 0.925,"$-4.0 < \\eta < 4.0 $");
-plot.GetPlot().text(0.01, 0.05, "Signal entries");
-plot.GetPlot().text(0.01, 0.03, "Y_HM-F*Y_MB entries");
 plot.GetRatioAxes(0).xaxis.set_ticks_position('both');
 plot.GetRatioAxes(0).yaxis.set_ticks_position('both');
 plot.Ratio(data, data_fit); # Plots theory vs data ratio

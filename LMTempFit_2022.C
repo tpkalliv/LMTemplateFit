@@ -22,18 +22,25 @@ void LMTempFit_2022() {
 	Double_t stepsize = (3-1)/(double) 100;
  	Double_t chi2_best;
  	Double_t factorF_best;
+
+ 	/*
  	Double_t G_par;
  	Double_t V1_par;
  	Double_t V2_par;
  	Double_t V3_par;
  	Double_t V4_par;
  	Double_t V5_par;
+ 	*/
+ 	
  	Int_t indexVal;
 	Int_t NH = 5;
  	TH1D*  hY_a[numbOfFVar];
 	TF1 *fitvn[NH];
 	Double_t vn[NH];
 	Double_t vnError[NH];
+
+	TString paramNames[NH+1] = {'const', 'v1', 'v2', 'v3', 'v4', 'v5'};
+	Double_t params[NH+1];
 
  	// Opens data 
 	TFile* fIn = new TFile ("Corr_1_3_GeV.root", "read");
@@ -55,7 +62,7 @@ void LMTempFit_2022() {
  	string cosine = "[0]*(1";
 	for (int i=1; i<=NH; i++) {
 		ostringstream app;
-		app << "+2*[" << i << "]*TMath::Cos(" << i << "*x)"; 
+		app << "+2*[" << i << "]*TMath::Cos(" << i << "*(x-[" << i + NH << "]))"; 
 		string append = app.str();
 		cosine = cosine + append;
 	}
@@ -68,17 +75,15 @@ void LMTempFit_2022() {
 
 	fFit->SetParName(0, "G_param");
 	fFit->SetParLimits(0, -10, 10);
+	fFit->SetParameter(0, 1);
 
 	for (int i = 1; i <= NH; i++) 
 	{
 		fFit->SetParName(i, Form("V%d,%d", i, i)); // Param 1: V2,2 and Param 2: V3,3 ...
-		fFit->SetParLimits(i, -1 , 1);
+		fFit->SetParLimits(i, -1, 1);
 	}
-
 	
-
 	// Initial values for parameters for fitting
-	fFit->SetParameter(0, 2);
 	fFit->SetParameter(1, 0.1); 
 	fFit->SetParameter(2, 0.06); 
 	fFit->SetParameter(3, 0.03); 
@@ -101,7 +106,7 @@ void LMTempFit_2022() {
  	{
  		hY_a[j] = (TH1D*) hY->Clone(); 
  		hY_a[j]->Add(hY_MB, -factorF[j]);
- 		hY_a[j]->Fit("fFit", "", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
+ 		hY_a[j]->Fit("fFit", "W", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
 	
 
  		//Double_t min_val = fFit->GetChisquare();
@@ -127,17 +132,15 @@ void LMTempFit_2022() {
  	}
 
 
- 	
  	// Saving harmonics
 	for (Int_t n=0; n<NH; n++)
 	{
-		TString formula = Form("[0]*(1 + 2*[1]*TMath::Cos(%d*x))",n);									// Creates new fourier
-		fitvn[n]= new TF1(Form("fit_v%d", n),formula, -TMath::Pi()/2.0, 3.0/2.0*TMath::Pi());			// Creates NH fits
-		vn[n] = fFit->GetParameter(n+1);																	// Saves vn's
-		vnError[n] = fFit->GetParError(n+1);																// Saves vn errors
-		fitvn[n]->SetParameter(1,vn[n]);																// Correct harmonic parameters to correct harmonics
-		double zero_param = G_par;
-		fitvn[n]->SetParameter(0, zero_param);
+		TString formula = Form("[0]*(1 + 2*[1]*TMath::Cos(%d*x))",n);									
+		fitvn[n]= new TF1(Form("fit_v%d", n),formula, -TMath::Pi()/2.0, 3.0/2.0*TMath::Pi());			
+		vn[n] = fFit->GetParameter(n+1);																	
+		vnError[n] = fFit->GetParError(n+1);																
+		fitvn[n]->SetParameter(1,vn[n]);																
+		fitvn[n]->SetParameter(0, G_par);
 		fitvn[n]->Write();
 	}
 	
