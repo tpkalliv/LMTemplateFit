@@ -27,7 +27,7 @@ ncol = 1;
 xlimits = {0:(-1.4,4.5)};
 ylimits = {0:(0.903,0.99)};
 '''
-rlimits = [(15.0,-15.0)];
+rlimits = [(0.8,1.2)];
 
 plot = JPyPlotRatio.JPyPlotRatio(panels=(1,1),
 	panelsize=(13,13), # change the size
@@ -39,8 +39,8 @@ plot = JPyPlotRatio.JPyPlotRatio(panels=(1,1),
 	legendPanel=0,
 	legendLoc=(0.2,1.12),legendSize=11,xlabel=xtitle[0],ylabel=ytitle[0]); # x- and y-coordinate labels
 
-fig = fload.Get("CMSeta_projection_1_0;40");
-fit = fload.Get("fFit;40");
+fig = fload.Get("CMSeta_projection_1_3;49");
+fit = fload.Get("fFit;49");
 fit_v2 = fload.Get("fit_v2");
 fit_v3 = fload.Get("fit_v3");
 
