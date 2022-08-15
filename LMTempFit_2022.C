@@ -27,6 +27,7 @@ void LMTempFit_2022() {
 	Int_t NH = 5;
  	TH1D*  hY_a[numbOfFVar];
 	TF1 *fitvn[NH];
+	TH1D* hY_a_G;
 	Double_t vn[NH];
 	Double_t vnError[NH];
 
@@ -89,10 +90,11 @@ void LMTempFit_2022() {
  	{
  		hY_a[j] = (TH1D*) hY->Clone(); 
  		hY_a[j]->Add(hY_MB, -factorF[j]);
+
+ 		hY_a_G = (TH1D*) hY_a[j]->Clone(); 
+
  		hY_a[j]->Fit("fFit", "", "", -TMath::Pi()/2.0, 3.0*TMath::Pi()/2.0);
 	
-
- 		//Double_t min_val = fFit->GetChisquare();
  		Double_t min_val = Chi2(hY_a[j], fFit, err);	
 
  		if (j == 0) chi2_best = min_val;
@@ -110,6 +112,14 @@ void LMTempFit_2022() {
 
 			hY_a[j]->Write();
 			fFit->Write();
+
+			
+			for (int z = 0; z < hY_a_G->GetNbinsX(); z++) {
+
+				Double_t binV = hY_a_G->GetBinContent(z);
+				hY_a_G->SetBinContent(z, binV + params[0]);
+			}
+			hY_a_G->Write("F*Y+G");
  		}	
  	}
 
@@ -120,7 +130,7 @@ void LMTempFit_2022() {
 		fitvn[n]= new TF1(Form("fit_v%d", n+1),formula, -TMath::Pi()/2.0, 3.0/2.0*TMath::Pi());			
 		vn[n] = fFit->GetParameter(n+1);																	
 		vnError[n] = fFit->GetParError(n+1);																
-		fitvn[n]->SetParameter(1,vn[n]);																
+		fitvn[n]->SetParameter(1,vn[n]);
 		fitvn[n]->SetParameter(0, params[0]);
 		fitvn[n]->Write();
 	}

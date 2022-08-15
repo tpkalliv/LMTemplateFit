@@ -14,7 +14,8 @@ dataTypePlotParams = 	[
 							{'plotType':'theory','facecolor':'b','edgecolor':'b','alpha':0.3,'linestyle':'solid','linecolor':'b'},
 							{'plotType':'data','color':'r','fmt':'s','markersize':1.0},
 							{'plotType':'theory','facecolor':'y','edgecolor':'y','alpha':0.3,'linestyle':'solid','linecolor':'y'},
-							{'plotType':'theory','facecolor':'g','edgecolor':'g','alpha':0.3,'linestyle':'solid','linecolor':'g'}
+							{'plotType':'theory','facecolor':'g','edgecolor':'g','alpha':0.3,'linestyle':'solid','linecolor':'g'},
+							{'plotType':'theory','facecolor':'r','edgecolor':'r','alpha':0.3,'linestyle':'solid','linecolor':'r'}
 						];
 
 xtitle = ["$\\Delta\\varphi (\\mathrm{rad})$"];
@@ -43,11 +44,13 @@ fig = fload.Get("CMSeta_projection_1_3;49");
 fit = fload.Get("fFit;49");
 fit_v2 = fload.Get("fit_v2");
 fit_v3 = fload.Get("fit_v3");
+#fit_G = fload.Get("F*Y+G;49");
 
 data = plot.Add(0, fig, **dataTypePlotParams[0], label='signal');
 data_fit = plot.Add(0, fit, **dataTypePlotParams[1], label='fit');
 data_fit_v2 = plot.Add(0, fit_v2, **dataTypePlotParams[3], label='v2');
 data_fit_v3 = plot.Add(0, fit_v3, **dataTypePlotParams[4], label='v3');
+#data_fit_G = plot.Add(0, fit_G, **dataTypePlotParams[5], label='F*Y+G');
 
 fload.Close();
 
