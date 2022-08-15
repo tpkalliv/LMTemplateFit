@@ -37,7 +37,7 @@ void LMTempFit_2022() {
 	Double_t params[sizeof(paramNames)];
 
  	// Opens data 
-	TFile* fIn = new TFile ("Corr_1_3_GeV.root", "read");
+	TFile* fIn = new TFile ("inputs/Corr_1_3_GeV.root", "read");
 
 
  	
@@ -82,7 +82,7 @@ void LMTempFit_2022() {
  		factorF[i] = 1 + (i*stepsize);
  	}	
 
-	TFile* fOut = new TFile ("CorrFit_2022.root", "recreate");
+	TFile* fOut = new TFile ("outputs/CorrFit_2022.root", "recreate");
 
  	// 	Multiplying, subtracting, fitting and Chi2 testing
  	for (int j = 0; j < numbOfFVar; j++) 

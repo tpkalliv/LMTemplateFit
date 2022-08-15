@@ -7,7 +7,7 @@ import sys;
 sys.path.append("JPyPlotRatio");
 import JPyPlotRatio
 
-fload = ROOT.TFile("CorrFit_2022.root","read"); #Opens figs
+fload = ROOT.TFile("outputs/CorrFit_2022.root","read"); #Opens figs
 
 dataTypePlotParams = 	[
 							{'plotType':'data','color':'k','fmt':'o','markersize':2.0},
